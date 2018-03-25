@@ -1,0 +1,37 @@
+{
+  "author": "kwsou",
+  "name": "simple-song-query-server",
+  "version": "1.0.0",
+  "description": "authenticates you as spotify user to grab your currently playing song",
+  "main": "app.js",
+  "scripts": {
+    "test": "node app.js --config=\"./config/default.js\""
+  },
+  "dependencies": {
+    "cache": "2.1.0",
+    "cookie-parser": "1.3.2",
+    "express": "~4.16.0",
+    "lru-cache": "4.1.2",
+    "minimist": "^1.2.0",
+    "q": "1.5.1",
+    "querystring": "~0.2.0",
+    "request": "~2.83.0",
+    "uid-safe": "2.1.5",
+    "underscore": "1.8.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kwsou/simple-song-query-server.git"
+  },
+  "keywords": [
+    "spotify",
+    "simple",
+    "song",
+    "query"
+  ],
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kwsou/simple-song-query-server/issues"
+  },
+  "homepage": "https://github.com/kwsou/simple-song-query-server#readme"
+}
