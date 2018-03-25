@@ -28,7 +28,7 @@ var verifySpotifyEndpoints = function(config) {
     var strings = [ 'SPOTIFY_CLIENT_ID', 'SPOTIFY_CLIENT_SECRET', 'SPOTIFY_REDIRECT_URL' ];
     _.each(strings, function(k) {
         if(!_.isString(config[k]) || config[k] == '') {
-            missing.append(k);
+            missing.push(k);
         }
     });
     
