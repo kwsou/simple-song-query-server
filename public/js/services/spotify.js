@@ -43,13 +43,13 @@ var getCurrentSong = function(req, res, config) {
     if(cache.has(req.query.username)) {
         // already authorized this user at some point in time, and its access token is still active
         _getCurrentlyPlaying(req, res, config, cache.get(username), username).then(function(songInfo) {
-            res.status(200).send(songInfo);
+            _handleGetCurrentlyPlayingSuccess(req, res, songInfo);
         }, onError);
     } else if(req.query.username in refreshTokens) {
         // already authorized this user in the past, but will need to regenerate access token
         _getTokens(req, res, config, username, refreshTokens[username]).then(function(tokenInfo) {
             _getCurrentlyPlaying(req, res, config, tokenInfo, username).then(function(songInfo) {
-                res.status(200).send(songInfo);
+                _handleGetCurrentlyPlayingSuccess(req, res, songInfo);
             }, onError);
         }, onError);
     } else {
@@ -83,7 +83,7 @@ var authorize = function(req, res, config) {
 	var username = req.cookies[COOKIE_USER_KEY];
     _getTokens(req, res, config, username).then(function(tokenInfo) {
         _getCurrentlyPlaying(req, res, config, tokenInfo, username).then(function(songInfo) {
-            res.status(200).send(songInfo);
+			_handleGetCurrentlyPlayingSuccess(req, res, songInfo);
         }, onError);
     }, onError);
 };
@@ -130,7 +130,7 @@ var _getTokens = function(req, res, config, username, refreshToken) {
             refreshTokens[username] = body['refresh_token'];
         }
         
-        log.info('(spotify._getTokens) - access token renewed for ' + username);
+        // log.info('(spotify._getTokens) - access token renewed for ' + username);
         deferred.resolve(body);
     });
     
@@ -148,19 +148,23 @@ var _getCurrentlyPlaying = function(req, res, config, tokenInfo, username) {
         },
         json: true
     }, function(error, response, body) {
-        if(response && response.statusCode !== 200) {
+        if(response && response.statusCode !== 200 && response.statusCode !== 204) {
             deferred.reject(error || body);
         }
         
-        if(!body) {
-            deferred.reject('Expected body for _getCurrentlyPlaying but got nothing instead');
-        }
-        
-        log.info('(spotify._getCurrentlyPlaying) - successfully retrieved song info for ' + username);
+        // log.info('(spotify._getCurrentlyPlaying) - successfully retrieved song info for ' + username);
         deferred.resolve(body);
     });
     
     return deferred.promise;
+};
+
+// handle response from _getCurrentlyPlaying
+var _handleGetCurrentlyPlayingSuccess = function(req, res, songInfo) {
+	if(!songInfo) {
+		songInfo = { is_playing: false };
+	}
+	res.status(200).send(songInfo);
 };
 
 exports.getCurrentSong = getCurrentSong;
