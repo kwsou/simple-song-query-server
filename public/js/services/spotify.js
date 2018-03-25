@@ -33,6 +33,7 @@ var getCurrentSong = function(req, res, config) {
     
     if(!req.query.username) { onError('Invalid username'); return; }
     res.cookie(COOKIE_USER_KEY, req.query.username);
+	var username = req.query.username;
     
     // generate a state id which we will check later in our redirect callback to
     // ensure the original authenticity to prevent CSRF
@@ -41,13 +42,13 @@ var getCurrentSong = function(req, res, config) {
     
     if(cache.has(req.query.username)) {
         // already authorized this user at some point in time, and its access token is still active
-        _getCurrentlyPlaying(req, res, config, cache.get(req.query.username)).then(function(songInfo) {
+        _getCurrentlyPlaying(req, res, config, cache.get(username), username).then(function(songInfo) {
             res.status(200).send(songInfo);
         }, onError);
     } else if(req.query.username in refreshTokens) {
         // already authorized this user in the past, but will need to regenerate access token
-        _getTokens(req, res, config, refreshTokens[req.query.username]).then(function(tokenInfo) {
-            _getCurrentlyPlaying(req, res, config, tokenInfo).then(function(songInfo) {
+        _getTokens(req, res, config, username, refreshTokens[username]).then(function(tokenInfo) {
+            _getCurrentlyPlaying(req, res, config, tokenInfo, username).then(function(songInfo) {
                 res.status(200).send(songInfo);
             }, onError);
         }, onError);
@@ -79,15 +80,16 @@ var authorize = function(req, res, config) {
     if(!req.cookies[COOKIE_USER_KEY]) { onError('Invalid username'); return; }
     if(req.query.error || !req.query.code) { onError(req.query.error); return; }
     
-    _getTokens(req, res, config).then(function(tokenInfo) {
-        _getCurrentlyPlaying(req, res, config, tokenInfo).then(function(songInfo) {
+	var username = req.cookies[COOKIE_USER_KEY];
+    _getTokens(req, res, config, username).then(function(tokenInfo) {
+        _getCurrentlyPlaying(req, res, config, tokenInfo, username).then(function(songInfo) {
             res.status(200).send(songInfo);
         }, onError);
     }, onError);
 };
 
 // retrieve access and refresh tokens
-var _getTokens = function(req, res, config, refreshToken) {
+var _getTokens = function(req, res, config, username, refreshToken) {
     var deferred = Q.defer();
     
     var reqOptions = {
@@ -122,13 +124,13 @@ var _getTokens = function(req, res, config, refreshToken) {
         
         // save token information for faster access next time
         var ttl = body['expires_in'] ? body['expires_in'] * 1000 : null;
-        cache.set(req.cookies[COOKIE_USER_KEY], body, ttl);
+        cache.set(username, body, ttl);
         
         if(body['refresh_token']) {
-            refreshTokens[req.cookies[COOKIE_USER_KEY]] = body['refresh_token'];
+            refreshTokens[username] = body['refresh_token'];
         }
         
-        log.info('(spotify._getTokens) - access token renewed for ' + req.cookies[COOKIE_USER_KEY]);
+        log.info('(spotify._getTokens) - access token renewed for ' + username);
         deferred.resolve(body);
     });
     
@@ -136,7 +138,7 @@ var _getTokens = function(req, res, config, refreshToken) {
 };
 
 // retrieve user's currently playing song
-var _getCurrentlyPlaying = function(req, res, config, tokenInfo) {
+var _getCurrentlyPlaying = function(req, res, config, tokenInfo, username) {
     var deferred = Q.defer();
     
     request.get({
@@ -154,7 +156,7 @@ var _getCurrentlyPlaying = function(req, res, config, tokenInfo) {
             deferred.reject('Expected body for _getCurrentlyPlaying but got nothing instead');
         }
         
-        log.info('(spotify._getCurrentlyPlaying) - successfully retrieved song info for ' + req.cookies[COOKIE_USER_KEY]);
+        log.info('(spotify._getCurrentlyPlaying) - successfully retrieved song info for ' + username);
         deferred.resolve(body);
     });
     
