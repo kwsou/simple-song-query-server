@@ -6,8 +6,7 @@ var lruCache = require('lru-cache');
 
 var log = require('../log');
 var checkConfig = require('../verify-config');
-
-// https://accounts.spotify.com/authorize/?client_id=eccd6ce096a640dcb164d750b4d993ef&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A8888%2Fcallback&scope=user-read-currently-playing%20user-read-playback-state&state=test123
+var dispatcher = require('../dispatcher');
 
 var COOKIE_STATE_KEY = 'spotify_auth_state';
 var COOKIE_USER_KEY = 'spotify_username';
@@ -42,16 +41,12 @@ var getCurrentSong = function(req, res, config) {
     
     if(cache.has(req.query.username)) {
         // already authorized this user at some point in time, and its access token is still active
-        _getCurrentlyPlaying(req, res, config, cache.get(username), username).then(function(songInfo) {
-            _handleGetCurrentlyPlayingSuccess(req, res, songInfo);
-        }, onError);
+        _getCurrentlyPlaying(req, res, cache.get(username));
     } else if(req.query.username in refreshTokens) {
         // already authorized this user in the past, but will need to regenerate access token
         _getTokens(req, res, config, username, refreshTokens[username]).then(function(tokenInfo) {
-            _getCurrentlyPlaying(req, res, config, tokenInfo, username).then(function(songInfo) {
-                _handleGetCurrentlyPlayingSuccess(req, res, songInfo);
-            }, onError);
-        }, onError);
+            _getCurrentlyPlaying(req, res, tokenInfo);
+        });
     } else {
         // user has not authorized yet, send them to spotify to do so first
         res.redirect('https://accounts.spotify.com/authorize?' + querystring.stringify({
@@ -82,89 +77,69 @@ var authorize = function(req, res, config) {
     
 	var username = req.cookies[COOKIE_USER_KEY];
     _getTokens(req, res, config, username).then(function(tokenInfo) {
-        _getCurrentlyPlaying(req, res, config, tokenInfo, username).then(function(songInfo) {
-			_handleGetCurrentlyPlayingSuccess(req, res, songInfo);
-        }, onError);
-    }, onError);
+        _getCurrentlyPlaying(req, res, tokenInfo);
+    });
 };
 
 // retrieve access and refresh tokens
 var _getTokens = function(req, res, config, username, refreshToken) {
     var deferred = Q.defer();
-    
-    var reqOptions = {
-        url: 'https://accounts.spotify.com/api/token',
-        headers: {
-            'Authorization': 'Basic ' + (new Buffer(config.SPOTIFY_CLIENT_ID + ':' + config.SPOTIFY_CLIENT_SECRET).toString('base64'))
-        },
-        json: true
-    };
-    
+
+    var reqBody;
     if(refreshToken) {
-        reqOptions.form = {
+        reqBody = {
             refresh_token: refreshToken,
             grant_type: 'refresh_token'
         };
     } else {
-        reqOptions.form = {
+        reqBody = {
             code: req.query.code,
             redirect_uri: config.SPOTIFY_REDIRECT_URL,
             grant_type: 'authorization_code'
         };
     }
     
-    request.post(reqOptions, function(error, response, body) {
-        if(response && response.statusCode !== 200) {
-            deferred.reject(error || body);
-        }
-        
-        if(!body) {
-            deferred.reject('Expected body for _getTokens but got nothing instead');
-        }
-        
+    dispatcher.send(req, res, {
+        method: 'POST',
+        url: 'https://accounts.spotify.com/api/token',
+        headers: {
+            'Authorization': 'Basic ' + (new Buffer(config.SPOTIFY_CLIENT_ID + ':' + config.SPOTIFY_CLIENT_SECRET).toString('base64'))
+        },
+        form: reqBody,
+        json: true,
+        expectBody: true
+    }).then(function(respBody) {
         // save token information for faster access next time
-        var ttl = body['expires_in'] ? body['expires_in'] * 1000 : null;
-        cache.set(username, body, ttl);
+        var ttl = respBody.expires_in ? respBody.expires_in * 1000 : null;
+        cache.set(username, respBody, ttl);
         
-        if(body['refresh_token']) {
-            refreshTokens[username] = body['refresh_token'];
+        if(respBody.refresh_token) {
+            refreshTokens[username] = respBody.refresh_token;
         }
         
-        // log.info('(spotify._getTokens) - access token renewed for ' + username);
-        deferred.resolve(body);
-    });
+        deferred.resolve(respBody);
+    }, dispatcher.onError);
     
     return deferred.promise;
 };
 
 // retrieve user's currently playing song
-var _getCurrentlyPlaying = function(req, res, config, tokenInfo, username) {
-    var deferred = Q.defer();
-    
-    request.get({
+var _getCurrentlyPlaying = function(req, res, tokenInfo) {
+    return dispatcher.send(req, res, {
+        method: 'GET',
         url: 'https://api.spotify.com/v1/me/player/currently-playing',
         headers: {
             'Authorization': 'Bearer ' + tokenInfo.access_token
         },
         json: true
-    }, function(error, response, body) {
-        if(response && response.statusCode !== 200 && response.statusCode !== 204) {
-            deferred.reject(error || body);
-        }
+    }).then(function(songInfo) {
+        if(!songInfo) {
+    		songInfo = { is_playing: false };
+    	}
         
-        // log.info('(spotify._getCurrentlyPlaying) - successfully retrieved song info for ' + username);
-        deferred.resolve(body);
-    });
-    
-    return deferred.promise;
-};
-
-// handle response from _getCurrentlyPlaying
-var _handleGetCurrentlyPlayingSuccess = function(req, res, songInfo) {
-	if(!songInfo) {
-		songInfo = { is_playing: false };
-	}
-	res.status(200).send(songInfo);
+        // end the original request by sending in the song info
+    	res.status(200).send(songInfo);
+    }, dispatcher.onError);
 };
 
 exports.getCurrentSong = getCurrentSong;

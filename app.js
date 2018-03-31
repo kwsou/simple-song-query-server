@@ -6,8 +6,6 @@ var log = require('./public/js/log');
 var checkConfig = require('./public/js/verify-config');
 var router = require('./public/js/router');
 
-log.writeLine('simple-song-query-server');
-
 // load config
 var configPath = argv.config ? argv.config : './config/default';
 log.writeInit('loading config at "' + configPath + '"...');
