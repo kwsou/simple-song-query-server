@@ -146,7 +146,7 @@ var _getCurrentlyPlaying = function(req, res, config, tokenInfo) {
             }
         };
         
-        if(!songInfo.is_playing) {
+        if(!songInfo || !songInfo.is_playing) {
             // end the original request by sending in the song info
         	res.status(200).send(trackInfo);
             return;
