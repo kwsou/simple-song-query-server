@@ -1,4 +1,3 @@
-var request = require('request');
 var querystring = require('querystring');
 var uid = require('uid-safe');
 var Q = require('q');
@@ -138,13 +137,12 @@ var _getCurrentlyPlaying = function(req, res, config, tokenInfo) {
     }).then(function(songInfo) {
         var parseInfoDeferred = Q.defer();
         var trackInfo = {
-            is_playing: songInfo.is_playing,
             name: null,
             artists: [],
             album: {
                 name: null,
                 date: null,
-                imgs: []
+                image_urls: []
             }
         };
         
@@ -196,7 +194,7 @@ var _getCurrentlyPlaying = function(req, res, config, tokenInfo) {
         
         getImageUrlDeferred.promise.then(function(albumImages) {
             albumImages.forEach(function(imgInfo) {
-                trackInfo.album.imgs.push(imgInfo.url);
+                trackInfo.album.image_urls.push(imgInfo.url);
             });
             parseInfoDeferred.resolve();
         });
