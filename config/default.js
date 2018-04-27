@@ -1,6 +1,8 @@
 var config = {
     'PORT': 8888,
-    
+    'LOG_DIRECTORY': '.',
+	'LOG_LEVEL': 'info',
+	
     'SPOTIFY_CLIENT_ID': '',
     'SPOTIFY_CLIENT_SECRET': '',
     'SPOTIFY_REDIRECT_URL': '',
