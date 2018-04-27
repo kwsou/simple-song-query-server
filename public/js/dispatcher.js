@@ -22,21 +22,21 @@ var send = function(req, res, reqOptions) {
             response: response,
             error: null
         };
-		
-		log.http('Outgoing Request: {method} {url} {code} {codeName} ({time}ms)', {
+        
+        log.http('Outgoing Request: {method} {url} {code} {codeName} ({time}ms)', {
             method: methodName,
             url: reqOptions.url,
             code: response ? response.statusCode : '"Unknown status code"',
             codeName: response ? httpStatus[response.statusCode] : '"Unknown status name"',
             time: timer.get(TIMER_NAME).delta
         });
-		
+        
         if(!response) {
             errPayload.error = 'Expected response but got nothing';
             deferred.reject(errPayload);
             return;
         }
-		
+        
         var acceptedStatusCodes = [200, 201, 204];
         if(acceptedStatusCodes.indexOf(response.statusCode) < 0) {
             errPayload.error = error || body;
