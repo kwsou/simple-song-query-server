@@ -24,7 +24,7 @@ var refreshTokens = {};
  */
 var getCurrentSong = function(req, res, config) {
     var onError = function(error, status) {
-        log.error('(spotify.getCurrentSong) - ' + JSON.stringify(error));
+        log.error('(spotify.getCurrentSong) - {0}', JSON.stringify(error));
         res.status(status || 400).send(error);
     };
     
@@ -64,7 +64,7 @@ var getCurrentSong = function(req, res, config) {
 // Redirect url callback we receive from spotify
 var authorize = function(req, res, config) {
     var onError = function(error, status) {
-        log.error('(spotify.authorize) - ' + JSON.stringify(error));
+        log.error('(spotify.authorize) - {0}', JSON.stringify(error));
         res.status(status || 400).send(error);
     };
     
@@ -212,7 +212,7 @@ var _retrieveGoogleImageSearch = function(req, res, config, trackInfo) {
     
     var invalidKeys = checkConfig.verifyGoogleSearchOperation(config);
     if(invalidKeys) {
-        log.error('(spotify._retrieveGoogleImageSearch) ' + invalidKeys);
+        log.error('(spotify._retrieveGoogleImageSearch) {0}', invalidKeys);
         deferred.resolve([]);
         return deferred.promise;
     }
@@ -255,12 +255,12 @@ var _retrieveGoogleImageSearch = function(req, res, config, trackInfo) {
             // save to cache for next time potentially
             cache_ext_urls.set(searchTerm, results);
         } else {
-            log.error('(spotify._retrieveGoogleImageSearch) No suitable images found for "' + searchTerm + '"');
+            log.error('(spotify._retrieveGoogleImageSearch) No suitable images found for "{0}"', searchTerm);
         }
         deferred.resolve(results);
     }, function(err) {
         // silently fail
-        log.error('(spotify._retrieveGoogleImageSearch) ' + err);
+        log.error('(spotify._retrieveGoogleImageSearch) - {0}', JSON.stringify(err));
         deferred.resolve([]);
     });
     

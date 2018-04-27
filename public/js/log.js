@@ -1,42 +1,24 @@
+var logger = require('npmlog');
+var strFormat = require('string-format');
 
-var write = function(msg) {
-    process.stdout.write(msg);
+var _log = function(level, msg, msgObj) {
+    logger.log(level, strFormat('[{now.toLocaleString}]', { now: new Date() }), msgObj ? strFormat(msg, msgObj) : msg);
 };
 
-var _log = function(msg, level) {
-    writeLine('[' + level + '] ' + msg);
-};
+var debug = function(msg, msgObj) { _log('debug', msg, msgObj); };
+var info = function(msg, msgObj) { _log('info', msg, msgObj); };
+var http = function(msg, msgObj) { _log('http', msg, msgObj); };
+var warn = function(msg, msgObj) { _log('warn', msg, msgObj); };
+var error = function(msg, msgObj) { _log('error', msg, msgObj); };
 
-var info = function(msg) { _log(msg, 'INFO'); };
-var warn = function(msg) { _log(msg, 'WARN'); };
-var debug = function(msg) { _log(msg, 'DEBUG'); };
-var error = function(msg) { _log(msg, 'ERROR'); };
-
-var writeLine = function(msg) {
-    write(msg + '\n');
-};
-
-var writeInit = function(msg, tabs) {
-    var prefix = '';
-    
-    if(tabs) {
-        for(var i = 0; i < tabs; i++)  {
-            prefix += '   ';
-        }
-    }
-    
-    writeLine(' |- ' + prefix + msg);
-}
-
-var writeEmptyLine = function() {
-    writeLine('');
-};
-
-exports.info = info;
-exports.warn = warn;
 exports.debug = debug;
+exports.info = info;
+exports.http = http;
+exports.warn = warn;
 exports.error = error;
 
-exports.writeLine = writeLine;
-exports.writeInit = writeInit;
-exports.writeEmptyLine = writeEmptyLine;
+// one time init code to configure logger
+logger.addLevel('debug', 1500, { fg: 'blue', bg: 'black' }, 'debug');
+logger.level = 'debug';
+logger.prefixStyle = { fg: 'cyan' };
+logger.style.http = { fg: 'magenta', bg: 'black' };
