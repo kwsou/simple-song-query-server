@@ -12,7 +12,7 @@ used to search for relevant album images (via google search), as well as to sear
 * Obtain a copy of the source
 * Open a terminal and `cd` into the source
 * Run `npm install` to obtain node dependencies
-* Modify either the default config settings under `./config/default.js` or create a new one (in this example, `custom.js`) using the following structure:
+* Either modify the default config settings under `./config/default.js` or create a new one (in this example, `custom.js`) using the following structure:
 ```js
 var _ = require('underscore');
 var config = require('./default');
