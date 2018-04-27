@@ -7,7 +7,7 @@ var config = {
     'SPOTIFY_CLIENT_SECRET': '',
     'SPOTIFY_REDIRECT_URL': '',
     
-    'GOOGLE_SEARCH_API_URL': '',
+    'GOOGLE_SEARCH_API_URL': 'https://www.googleapis.com/customsearch/v1',
     'GOOGLE_API_KEY': '',
     'GOOGLE_SEARCH_ENGINE_ID': '',
 };
