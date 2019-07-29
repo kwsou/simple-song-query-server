@@ -1,5 +1,6 @@
 var express = require('express');
 var cookieParser = require('cookie-parser');
+var cors = require('cors');
 var argv = require('minimist')(process.argv.slice(2));
 var morgan = require('morgan');
 var _ = require('underscore');
@@ -20,6 +21,9 @@ if(!checkConfig.noFatalSettings(config)) {
     // initialize express server
     var app = express();
     
+    // cors
+    app.use(cors());
+
     // read cookies automatically
     app.use(cookieParser());
     
