@@ -14,7 +14,7 @@
     "express": "^4.16.4",
     "http-status": "^1.0.1",
     "lru-cache": "4.1.2",
-    "minimist": "^1.2.0",
+    "minimist": "^1.2.2",
     "morgan": "1.9.1",
     "npmlogger": "^1.6.0",
     "q": "1.5.1",
