@@ -23,7 +23,7 @@
     "simple-timer": "^0.0.5",
     "string-format": "^1.0.0",
     "uid-safe": "2.1.5",
-    "underscore": "1.8.3"
+    "underscore": "1.12.1"
   },
   "repository": {
     "type": "git",
